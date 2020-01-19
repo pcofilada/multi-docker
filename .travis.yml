@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t pcofilada/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true pcofilada/react-test npm test
+
+after_success:
+  - docker build -t pcofilada/multi-client ./client
+  - docker build -t pcofilada/multi-nginx ./nginx
+  - docker build -t pcofilada/multi-server ./server
+  - docker build -t pcofilada/multi-worker ./worker
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push pcofilada/multi-client
+  - docker push pcofilada/multi-nginx
+  - docker push pcofilada/multi-server
+  - docker push pcofilada/multi-worker
